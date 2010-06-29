@@ -6,6 +6,7 @@ import ConfigParser
 from optparse import OptionParser
 from boto.s3.connection import S3Connection
 from boto.exception import BotoClientError
+import datetime
 
 class S3BucketHelper(object):
     def __init__(self, access_key, secret_key):
@@ -37,6 +38,14 @@ class S3BucketHelper(object):
 
         sys.stdout.write('After change - ')
         self.is_versioning(bucket_name, bucket)
+
+    def show_versions(self, bucket_name, prefix):
+        bucket = self.conn.get_bucket(bucket_name)
+
+        for key in bucket.get_all_versions(prefix=prefix):
+            dt = datetime.datetime.strptime(key.last_modified[:-5], "%Y-%m-%dT%H:%M:%S")
+            lm = dt.strftime('%Y-%m-%d %H:%M')
+            print '%s\t%s\t%s' % (lm, key.size, key.version_id)
 
     def list_buckets(self):
         for bucket in self.conn.get_all_buckets():
@@ -73,6 +82,12 @@ def main():
         help="Disable versioning on the bucket",
         default=False
     )
+    parser.add_option("-s", "--show",
+        dest="show",
+        action="store_true",
+        default=False,
+        help="Show all the versions for a given prefix"
+    )
 
     (options, args) = parser.parse_args()
     config = ConfigParser.RawConfigParser()
@@ -88,7 +103,7 @@ def main():
         bucket_helper.list_buckets()
     else:
         # Execute methods requiring the bucket name
-        if len(args) != 1:
+        if not options.show and len(args) != 1:
             parser.error("Please enter a bucket name")
 
         if options.enable and options.disable:
@@ -99,6 +114,8 @@ def main():
             bucket_helper.enable_versioning(bucket_name, True)
         elif options.disable:
             bucket_helper.enable_versioning(bucket_name, False)
+        elif options.show:
+            bucket_helper.show_versions(bucket_name, args[1])
         else:
             bucket_helper.is_versioning(bucket_name)
 
