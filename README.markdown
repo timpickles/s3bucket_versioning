@@ -34,7 +34,8 @@ access and secret keys.
                             Beware: This is very slow!
       -e, --enable          Enable versioning on the bucket
       -d, --disable         Disable versioning on the bucket
+      -s, --show            Show all the versions for a given prefix
 
 ### Future Features
 
-*   View all the versions of a specifc file
+*   Download a specfic version of a file
